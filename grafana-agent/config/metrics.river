@@ -1,6 +1,7 @@
 prometheus.scrape "container_metrics" {
   targets = [
     {"__address__" = "cadvisor:8080"},
+    {"__address__" = "node-exporter:9100"},
   ]
   forward_to = [ prometheus.remote_write.mimir.receiver ]
 }

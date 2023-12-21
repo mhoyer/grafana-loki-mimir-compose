@@ -1,0 +1,23 @@
+version: "2"
+
+networks:
+  node-exporter: { name: node-exporter }
+
+services:
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:v1.7.0
+    container_name: "node-exporter"
+    # labels:
+    #   de.pixelplastic.deduplication-key-filter: "node-exporter;node-exporter;8080;0.0.0.0"
+    command:
+      - '--path.rootfs=/host'
+    # network_mode: host
+    networks:
+      - node-exporter
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
+
+
+

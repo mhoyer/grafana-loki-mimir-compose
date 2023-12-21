@@ -5,6 +5,7 @@ networks:
   cadvisor: { name: cadvisor, external: true }
   loki: { name: loki, external: true }
   mimir: { name: mimir, external: true }
+  node-exporter: { name: node-exporter, external: true }
 
 services:
   grafana-agent:
@@ -24,6 +25,7 @@ services:
       - cadvisor
       - loki
       - mimir
+      - node-exporter
     ports:
       - "12345:12345"
     volumes:
