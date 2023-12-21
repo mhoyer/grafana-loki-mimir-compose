@@ -6,9 +6,7 @@ prometheus.scrape "container_metrics" {
 }
 
 prometheus.remote_write "mimir" {
-  // external_labels = {
-  //   cluster = "docker-compose",
-  // }
+  external_labels = {}
 
   endpoint {
     url = "http://mimir:8080/api/v1/push"

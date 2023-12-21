@@ -57,3 +57,4 @@ compactor:
 
 limits:
   native_histograms_ingestion_enabled: true
+  max_label_names_per_series: 50
