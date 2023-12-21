@@ -1,0 +1,10 @@
+apiVersion: 1
+datasources:
+  - name: Loki
+    uid: loki
+    type: loki # see: https://grafana.com/docs/grafana/latest/datasources/loki/
+    url: http://loki:3100
+    editable: false
+    isDefault: true
+
+# deleteDatasources:

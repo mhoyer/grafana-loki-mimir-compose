@@ -1,0 +1,68 @@
+discovery.docker "default" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "docker" {
+  targets = discovery.docker.default.targets
+
+  rule {
+    action = "labelmap"
+    regex = "__meta_docker_(network_ip|container_network_mode)"
+    replacement = "${1}"
+  }
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex = "/(.*)"
+    target_label = "container"
+  }
+
+  // HACK to prevent https://github.com/grafana/agent/issues/4403
+  rule {
+    source_labels = ["container", "__meta_docker_network_label_com_docker_compose_network", "__meta_docker_port_public", "__meta_docker_port_public_ip"]
+    target_label = "__meta_deduplication_key"
+  }
+}
+
+// HACK to prevent https://github.com/grafana/agent/issues/4403
+discovery.relabel "container_filter" {
+  targets = discovery.relabel.docker.output
+
+  rule {
+    action = "keepequal"
+    source_labels = ["__meta_deduplication_key"]
+    target_label = "__meta_docker_container_label_de_pixelplastic_deduplication_key_filter"
+  }
+}
+
+loki.source.docker "default" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.container_filter.output
+  forward_to = [loki.process.default.receiver]
+}
+
+loki.process "default" {
+  forward_to = [loki.write.default.receiver]
+
+  stage.drop {
+    // prevents loki error 'entry too far behind'
+    older_than          = "23h"
+    drop_counter_reason = "too old"
+  }
+
+  stage.drop {
+    longer_than         = "8KB"
+    drop_counter_reason = "too long"
+  }
+
+  stage.timestamp {
+    source = "time"
+    format = "RFC3339"
+  }
+}
+
+loki.write "default" {
+  // external_labels = {}
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

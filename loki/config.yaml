@@ -1,0 +1,70 @@
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+  log_level: warn
+
+common:
+  instance_addr: 127.0.0.1
+  path_prefix: /loki
+  storage:
+    s3:
+      endpoint:          minio:9000
+      access_key_id:     ${MINIO_ACCESS_KEY}
+      secret_access_key: ${MINIO_SECRET_KEY}
+      insecure: true
+      bucketnames: loki-data
+      s3forcepathstyle: true
+    # filesystem:
+    #   chunks_directory: /loki/chunks
+    #   rules_directory: /loki/rules
+  # compactor_address: http://loki-write:3100
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+ingester:
+  max_chunk_age: 48h # default 2h, see also: https://grafana.com/docs/agent/latest/flow/reference/components/loki.process/#stagedrop-block
+
+compactor:
+  #working_directory: /data/retention
+  #shared_store: gcs
+  compaction_interval: 10m
+  retention_enabled: true
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 10 # 150
+
+limits_config:
+  retention_period: 48h
+  reject_old_samples: false
+  reject_old_samples_max_age: 1w
+  query_timeout: 2m
+
+# querier:
+#   engine:
+#     timeout: 3m
+
+query_range:
+  results_cache:
+    cache:
+      embedded_cache:
+        enabled: true
+        max_size_mb: 100
+
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: tsdb
+      object_store: filesystem
+      schema: v12
+      index:
+        prefix: index_
+        period: 24h
+
+ruler:
+  alertmanager_url: http://localhost:9093
+
+analytics:
+  reporting_enabled: false

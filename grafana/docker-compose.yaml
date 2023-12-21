@@ -1,0 +1,27 @@
+version: "2"
+
+networks:
+  grafana: { name: grafana }
+  loki: { name: loki, external: true }
+  mimir: { name: mimir, external: true }
+
+volumes:
+  grafana:
+
+services:
+  grafana:
+    container_name: "grafana"
+    image: grafana/grafana-oss:10.2.2
+    labels:
+      de.pixelplastic.deduplication-key-filter: "grafana;grafana;3000;0.0.0.0"
+    restart: unless-stopped
+    networks:
+      - grafana
+      - loki
+      - mimir
+    ports:
+      - "3000:3000"
+    volumes:
+      - "grafana:/var/lib/grafana"
+      - "./grafana.ini:/etc/grafana/grafana.ini:ro"
+      - "./provisioning:/etc/grafana/provisioning:ro"

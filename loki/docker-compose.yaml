@@ -1,0 +1,31 @@
+version: "2"
+
+networks:
+  loki: { name: loki }
+  minio: { name: minio, external: true }
+
+volumes:
+  loki:
+
+services:
+  loki:
+    container_name: "loki"
+    image: grafana/loki:2.9.2
+    restart: unless-stopped
+    command:
+      # - "-print-config-stderr"
+      - "-config.file=/etc/loki/local-config.yaml"
+      - "-config.expand-env=true"
+    labels:
+      de.pixelplastic.deduplication-key-filter: "loki;loki;3100;0.0.0.0"
+    env_file: ["../.env"]
+    environment:
+      - TZ=Europe/Berlin
+    networks:
+      - loki
+      - minio
+    ports:
+      - "3100:3100"
+    volumes:
+      - "loki:/loki"
+      - "./config.yaml:/etc/loki/local-config.yaml:ro"

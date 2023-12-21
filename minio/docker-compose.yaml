@@ -1,0 +1,50 @@
+version: "2"
+
+networks:
+  minio:
+    name: minio
+
+volumes:
+  data:
+
+services:
+  minio:
+    container_name: minio
+    image: quay.io/minio/minio:RELEASE.2023-12-07T04-16-00Z
+    restart: unless-stopped
+    labels:
+      de.pixelplastic.deduplication-key-filter: "minio;minio;9000;0.0.0.0"
+    env_file: ["../.env"]
+    entrypoint:
+      - sh
+      - -euc
+      - minio server /data --console-address ':9001'
+    networks:
+      - minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - data:/data:delegated
+
+  minio-init:
+    container_name: "minio-init"
+    image: minio/mc:latest
+    restart: "no"
+    env_file: ["../.env"]
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        sleep 5
+        mc config host add s3 http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} --api S3v4
+        mc mb -p s3/mimir-blocks s3/mimir-ruler s3/mimir-alertmanager s3/loki-data
+        mc admin user svcacct add              \
+          --access-key "$${MINIO_ACCESS_KEY}"  \
+          --secret-key "$${MINIO_SECRET_KEY}"  \
+          s3 $${MINIO_ROOT_USER}
+        # mc admin user add s3 "$${MINIO_ACCESS_KEY}" "$${MINIO_SECRET_KEY}"
+        # mc admin policy attach s3 readwrite --user "demo"
+        exit 0
+    networks:
+      - minio
